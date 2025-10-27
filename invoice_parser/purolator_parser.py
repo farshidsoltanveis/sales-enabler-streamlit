@@ -1,17 +1,7 @@
 # ======================================
-# Purolator (FR) Invoices → Excel (Jupyter one-cell, robust weights & pieces)
+# Purolator (FR) Invoices → Excel
 # ======================================
 
-# --- 0) Dependencies: install if missing (works in Jupyter or plain Python) ---
-import sys, subprocess
-def _ensure(pkg):
-    try:
-        __import__(pkg)
-    except ImportError:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", pkg])
-
-for _p in ("pymupdf", "pandas", "openpyxl"):
-    _ensure(_p)
 
 # --- 1) Imports & Globals ---
 import re
@@ -510,12 +500,14 @@ def run_purolator_parser(input_pdfs, output_dir="output", output_basename="Purol
         if frames:
             pd.concat(frames, ignore_index=True).to_excel(one_sheet_excel, index=False)
 
-       # (NEW) Update integrated workbook
-    if update_integrated:
-        integrated_written = update_purolator_integrated_workbook(
-            df_out, df_cor, integrated_path=integrated_path
-        )
-        print(f"✅ Integrated workbook updated: {Path(integrated_written).resolve()}")
+    # (NEW) Update integrated workbook
+    # if update_integrated:
+
+
+    #     integrated_written = update_purolator_integrated_workbook(
+    #         df_out, df_cor, integrated_path=integrated_path
+    #     )
+    #     print(f"✅ Integrated workbook updated: {Path(integrated_written).resolve()}")
 
 
     return str(output_excel)

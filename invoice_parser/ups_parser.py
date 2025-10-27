@@ -1,18 +1,9 @@
 # ======================================
 # UPS Invoices → Excel (Outbound filtered + surcharge Published/Incentive/Billed)
-# Jupyter one-cell version
+
 # ======================================
 
-# --- 0) Dependencies: install if missing (works in Jupyter or plain Python) ---
-import sys, subprocess
-def _ensure(pkg):
-    try:
-        __import__(pkg)
-    except ImportError:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", pkg])
 
-for _p in ("pymupdf", "pandas", "openpyxl"):
-    _ensure(_p)
 
 # --- 1) Imports & Globals ---
 import re
@@ -538,25 +529,23 @@ def process_invoices(pdf_paths: List[str]):
 
 
 
+# --- Integrated workbook helpers (UPS-only) ---
+import os
+from pathlib import Path
+import pandas as pd
+from datetime import datetime
 
 def _safe_concat(existing: pd.DataFrame, new: pd.DataFrame) -> pd.DataFrame:
-    """Column-union concat to avoid key errors when columns differ slightly."""
-    if existing is None or existing.empty:
-        return new.copy()
-    if new is None or new.empty:
-        return existing.copy()
-    # Align columns (union)
+    if existing is None or existing.empty: return new.copy()
+    if new is None or new.empty: return existing.copy()
     all_cols = sorted(set(existing.columns) | set(new.columns))
     return pd.concat([existing.reindex(columns=all_cols),
                       new.reindex(columns=all_cols)], ignore_index=True)
 
 def _dedup(df: pd.DataFrame, keys: list[str]) -> pd.DataFrame:
-    """De-duplicate with a stable strategy: keep the last (newest) row."""
-    if df is None or df.empty:
-        return df
+    if df is None or df.empty: return df
     present_keys = [k for k in keys if k in df.columns]
-    if not present_keys:
-        return df
+    if not present_keys: return df
     return df.drop_duplicates(subset=present_keys, keep="last").reset_index(drop=True)
 
 def update_integrated_workbook(
@@ -566,29 +555,20 @@ def update_integrated_workbook(
     df_cor: pd.DataFrame,
     integrated_path: str = "data/UPS_integrated.xlsx",
 ) -> str:
-    """
-    Merge the four section DataFrames into a persistent, de-duplicated Excel file.
-    Creates the file if missing; otherwise appends + dedups per sheet.
-    Returns the integrated_path.
-    """
+    """Append per-section frames into a persistent, de-duplicated Excel."""
     integrated_path = str(Path(integrated_path))
     Path(integrated_path).parent.mkdir(parents=True, exist_ok=True)
 
-    # Add an import timestamp (helps auditing/overrides)
     imported_at = datetime.now().isoformat(timespec="seconds")
     def _tag(df):
         if isinstance(df, pd.DataFrame) and not df.empty:
             df = df.copy()
             df["Imported At"] = imported_at
-            return df
         return df
 
-    df_out = _tag(df_out)
-    df_ret = _tag(df_ret)
-    df_adj = _tag(df_adj)
-    df_cor = _tag(df_cor)
+    df_out = _tag(df_out); df_ret = _tag(df_ret); df_adj = _tag(df_adj); df_cor = _tag(df_cor)
 
-    # Read existing if present
+    # Read existing sheets if present
     existing = {}
     if os.path.exists(integrated_path):
         try:
@@ -596,19 +576,17 @@ def update_integrated_workbook(
         except Exception:
             existing = {}
 
-    # Merge per sheet
     sheets = {
-        "Outbound_Shipments": df_out,                 # keys chosen to best avoid dupes
+        "Outbound_Shipments": df_out,
         "UPS_Returns": df_ret,
         "Residential_Adjustments": df_adj,
         "Charge_Corrections": df_cor,
     }
-    # De-dup keys per sheet
     dedup_keys = {
-        "Outbound_Shipments": ["Invoice Number", "Tracking Number", "Date"],  # your outbound has these cols :contentReference[oaicite:2]{index=2}
-        "UPS_Returns": ["Invoice Number", "Tracking Number", "Returned Date"],# returns schema :contentReference[oaicite:3]{index=3}
-        "Residential_Adjustments": ["Invoice Number", "Tracking Number", "Date"],  # adjustments schema :contentReference[oaicite:4]{index=4}
-        "Charge_Corrections": ["Invoice Number", "Tracking Number", "Date"],  # corrections schema :contentReference[oaicite:5]{index=5}
+        "Outbound_Shipments": ["Invoice Number", "Tracking Number", "Date"],
+        "UPS_Returns": ["Invoice Number", "Tracking Number", "Returned Date"],
+        "Residential_Adjustments": ["Invoice Number", "Tracking Number", "Date"],
+        "Charge_Corrections": ["Invoice Number", "Tracking Number", "Date"],
     }
 
     with pd.ExcelWriter(integrated_path, engine="openpyxl", mode="w") as writer:
@@ -628,9 +606,8 @@ def run_ups_parser(
     output_dir="output",
     output_basename="UPS_invoices",
     single_sheet=False,
-    # NEW:
-    update_integrated=False,
-    integrated_path="data/UPS_integrated.xlsx",
+    update_integrated=False,                  # NEW
+    integrated_path="data/UPS_integrated.xlsx",  # NEW
 ):
     """
     Runs the UPS invoice parser using your existing logic (process_invoices) and
@@ -706,6 +683,7 @@ def run_ups_parser(
     print(f"  Excluded trackings (unique): {len(exclude_trackings)}")
     print(f"  Outbound rows after:  {after}")
 
+    
     # 5) Write multi-sheet Excel
     with pd.ExcelWriter(output_excel, engine="openpyxl") as writer:
         if not df_out_filtered.empty:
@@ -734,11 +712,12 @@ def run_ups_parser(
             pd.concat(frames, ignore_index=True).to_excel(single_excel, index=False)
 
     # 7) (NEW) Update the integrated workbook (append + dedup)
-    if update_integrated:
-        integrated_written = update_integrated_workbook(
-            df_out_filtered, df_ret, df_adj, df_cor, integrated_path=integrated_path
-        )
-        print(f"✅ Integrated workbook updated: {Path(integrated_written).resolve()}")
+    # if update_integrated:
+    #     integrated_written = update_integrated_workbook(
+    #         df_out_filtered, df_ret, df_adj, df_cor, integrated_path=integrated_path
+    #     )
+    #     print(f"✅ Integrated workbook updated: {Path(integrated_written).resolve()}")
+
 
     print(f"✅ Wrote: {output_excel.resolve()}")
     if single_sheet:
