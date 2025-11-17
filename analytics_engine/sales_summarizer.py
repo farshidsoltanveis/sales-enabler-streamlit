@@ -18,11 +18,18 @@ def summarize_with_openai(
     Produces a 5-bullet Executive Summary only, per spec.
     Requires OPENAI_API_KEY in env. Default model: gpt-4o-mini.
     """
+    # Check for API key first
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        error_msg = "OPENAI_API_KEY environment variable is not set. Cannot use OpenAI summarization."
+        print(f"ERROR: {error_msg}")
+        raise ValueError(error_msg)
+    
     # <<< DELAYED IMPORT: happens only when the function is called >>>
     from analytics_to_prompt import insights_to_prompt
 
     from openai import OpenAI  # pip install openai>=1.0.0
-    client = OpenAI(timeout=timeout_s)
+    client = OpenAI(api_key=api_key, timeout=timeout_s)
     model = model or os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
     prompt = insights_to_prompt(

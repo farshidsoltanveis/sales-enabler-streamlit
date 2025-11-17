@@ -365,7 +365,17 @@ def generate_insights():
                         max_tokens=400,
                         max_sig_rows=6,
                     )
-                except Exception:
+                    print(f"✓ Successfully generated OpenAI summary for {filename}")
+                except ValueError as e:
+                    # API key missing - use offline
+                    print(f"⚠️  OpenAI API key not configured: {e}")
+                    print(f"   Using offline summary for {filename}")
+                    brief_md = modules["summarize_offline"](insights, company_name="Canada Post")
+                    brief_suffix = "_brief_offline.md"
+                except Exception as e:
+                    # Other OpenAI errors - log and fallback
+                    print(f"⚠️  OpenAI summarization failed for {filename}: {type(e).__name__}: {e}")
+                    print(f"   Falling back to offline summary")
                     brief_md = modules["summarize_offline"](insights, company_name="Canada Post")
                     brief_suffix = "_brief_offline.md"
 
@@ -462,7 +472,17 @@ def generate_insights_from_existing():
                         max_tokens=400,
                         max_sig_rows=6,
                     )
-                except Exception:
+                    print(f"✓ Successfully generated OpenAI summary for {filename}")
+                except ValueError as e:
+                    # API key missing - use offline
+                    print(f"⚠️  OpenAI API key not configured: {e}")
+                    print(f"   Using offline summary for {filename}")
+                    brief_md = modules["summarize_offline"](insights, company_name="Canada Post")
+                    brief_suffix = "_brief_offline.md"
+                except Exception as e:
+                    # Other OpenAI errors - log and fallback
+                    print(f"⚠️  OpenAI summarization failed for {filename}: {type(e).__name__}: {e}")
+                    print(f"   Falling back to offline summary")
                     brief_md = modules["summarize_offline"](insights, company_name="Canada Post")
                     brief_suffix = "_brief_offline.md"
 
