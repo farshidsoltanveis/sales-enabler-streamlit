@@ -674,6 +674,29 @@ def screenshot():
     return send_from_directory(app.static_folder, 'screenshot.png')
 
 
+@app.route('/api/health')
+def health_check():
+    """Health check endpoint that shows environment status."""
+    import os
+    api_key_set = bool(os.getenv('OPENAI_API_KEY'))
+    api_key_preview = "Set" if api_key_set else "Not Set"
+    if api_key_set:
+        key_value = os.getenv('OPENAI_API_KEY', '')
+        # Show first 7 and last 4 characters for verification
+        if len(key_value) > 11:
+            api_key_preview = f"{key_value[:7]}...{key_value[-4:]}"
+        else:
+            api_key_preview = "Set (invalid format?)"
+    
+    return jsonify({
+        "status": "ok",
+        "openai_api_key": api_key_preview,
+        "openai_configured": api_key_set,
+        "flask_env": os.getenv('FLASK_ENV', 'not set'),
+        "port": os.getenv('PORT', 'not set'),
+    })
+
+
 if __name__ == '__main__':
     # Use port from environment or default to 5001 for local dev (5000 is often used by AirPlay on macOS)
     # Production platforms (Render, Railway, etc.) will set PORT env var
