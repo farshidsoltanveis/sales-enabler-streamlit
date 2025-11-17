@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Assistant for Sales Teams</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    .play-button-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 64px;
+      height: 64px;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 10;
+    }
+    .play-button-overlay:hover {
+      background: rgba(0, 0, 0, 0.8);
+      transform: translate(-50%, -50%) scale(1.1);
+    }
+    .play-button-overlay.hidden {
+      display: none;
+    }
+    .play-icon {
+      width: 0;
+      height: 0;
+      border-left: 20px solid white;
+      border-top: 12px solid transparent;
+      border-bottom: 12px solid transparent;
+      margin-left: 4px;
+    }
+    .image-container {
+      position: relative;
+      cursor: pointer;
+    }
+    .image-container img {
+      display: block;
+    }
+    .image-container video {
+      display: none;
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+    }
+    .image-container.playing img {
+      display: none;
+    }
+    .image-container.playing video {
+      display: block;
+    }
+    .image-container.playing .play-button-overlay {
+      display: none;
+    }
+    .button-disabled {
+      background: #9CA3AF !important;
+      cursor: not-allowed !important;
+      opacity: 0.6;
+    }
+    .button-disabled:hover {
+      background: #9CA3AF !important;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+    #fileInput {
+      display: none;
+    }
+    
+    /* Card layout: keep button and result stacked in each column */
+    .card-column {
+      display: flex;
+      flex-direction: column;
+      min-height: 600px;
+    }
+    
+
+    /* Container that holds the blue action button */
+    .card-column .button-container {
+      width: 100%;
+      margin-top: 1.5rem; /* space between bullets and button */
+    }
+
+    /* Make buttons full-width in their column */
+    .card-column #uploadBtn,
+    .card-column #generateInsightsBtn {
+      width: 100%;
+      flex-shrink: 0;
+    }
+
+    .card-column #uploadResultsBox,
+    .card-column #resultsBox {
+      margin-top: 1rem;        /* gap under button */
+      height: 240px;           /* fixed height for both sides */
+      max-height: 240px;
+      overflow-y: auto;        /* scroll inside when content is long */
+    }
+
+    
+    /* Bullet list should NOT push the button down */
+    .card-column > ul {
+      flex: 0 0 auto; /* no flex-grow */
+      min-height: 0;
+    }
+
+
+    /* Keep image, title, and description from shrinking weirdly */
+    .card-column > .image-container,
+    .card-column > h2,
+    .card-column > p {
+      flex-shrink: 0;
+    }
+
+
+
+  </style>
+</head>
+<body class="bg-white text-[#111827]">
+    <!-- Hero Section -->
+  <section class="py-20 px-4">
+    <div class="max-w-[1200px] mx-auto text-center">
+      <!-- Hero Text -->
+      <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+        AI Assistant for Sales Teams
+          </h1>
+      <p class="text-xl md:text-2xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
+        Turning messy competitor invoices into structured Excel and actionable insights.
+          </p>
+
+     <!-- Flow Screenshot -->
+    <div class="mt-12 flex justify-center">
+      <div class="bg-white rounded-2xl shadow-[0_4px_14px_rgba(0,0,0,0.08)] border border-gray-100 p-6 max-w-4xl w-full">
+        <img src="/static/Flow.png" 
+             alt="Product Flow"
+             class="w-full h-auto rounded-xl">
+      </div>
+    </div>
+
+        </div>
+  </section>
+
+  <!-- Two Column Section -->
+  <section class="py-20 px-4 bg-[#F9FAFB]">
+    <div class="max-w-[1200px] mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+        
+        <!-- Left Column: Invoice → Excel Engine -->
+        <div class="card-column bg-white rounded-xl p-8 shadow-[0_4px_12px_rgba(0,0,0,0.06)] border border-gray-100 flex flex-col min-h-[600px]">
+           <!-- Image only (no video) -->
+          <div class="mb-6">
+            <img src="/static/invoices.png" alt="Invoice to Excel" class="w-full h-auto rounded-lg shadow-sm" />
+          </div>
+
+
+          <!-- Title -->
+          <h2 class="text-2xl font-bold mb-4">Invoice Scraping Engine</h2>
+          
+          <!-- Description -->
+          <p class="text-gray-600 mb-6 leading-relaxed">
+            Upload competitor invoices and instantly transform them into clean, structured Excel files.
+          </p>
+          
+          <!-- Bullet List -->
+          <ul class="space-y-3 mb-8">
+            <li class="flex items-start">
+              <span class="text-[#2563EB] mr-3 font-bold">•</span>
+              <span class="text-gray-700">Zero manual cleanup</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-[#2563EB] mr-3 font-bold">•</span>
+              <span class="text-gray-700">Extracting all attributes of invoices</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-[#2563EB] mr-3 font-bold">•</span>
+              <span class="text-gray-700">Supporting English and French</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-[#2563EB] mr-3 font-bold">•</span>
+              <span class="text-gray-700">Supporting UPS and Purolator for now</span>
+            </li>
+          </ul>
+          
+          <!-- Button Container -->
+          <div class="button-container">
+            <input type="file" id="fileInput" multiple accept=".pdf" style="display: none;" />
+            <button id="uploadBtn" class="bg-[#2563EB] hover:bg-[#1d4ed8] text-white font-semibold py-3.5 px-7 rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl w-full">
+              Upload Invoice
+          </button>
+          </div>
+
+          <!-- Upload Results Box -->
+          <div id="uploadResultsBox" class="border border-gray-200 bg-[#F9FAFB] rounded-lg p-4 min-h-[120px] flex items-center justify-center">
+            <p class="text-gray-500 text-sm text-center">
+              Results will appear here after you upload invoices.
+              </p>
+            </div>
+          </div>
+
+        <!-- Right Column: Excel → Insight & Recommendation Engine -->
+        <div class="card-column bg-white rounded-xl p-8 shadow-[0_4px_12px_rgba(0,0,0,0.06)] border border-gray-100 flex flex-col min-h-[600px]">
+            <!-- Image only (no video) -->
+            <div class="mb-6">
+              <img src="/static/insights.png" alt="Excel to Insights" class="w-full h-auto rounded-lg shadow-sm" />
+            </div>
+
+
+          <!-- Title -->
+          <h2 class="text-2xl font-bold mb-4">Analytics Engine</h2>
+          
+          <!-- Description -->
+          <p class="text-gray-600 mb-6 leading-relaxed">
+            Combine invoices with internal knowledge database to generate actionable strategic insights.
+          </p>
+          
+          <!-- Bullet List -->
+          <ul class="space-y-3 mb-8">
+            <li class="flex items-start">
+              <span class="text-[#2563EB] mr-3 font-bold">•</span>
+              <span class="text-gray-700">Price gap classification</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-[#2563EB] mr-3 font-bold">•</span>
+              <span class="text-gray-700">Elasticity-based pricing suggestion</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-[#2563EB] mr-3 font-bold">•</span>
+              <span class="text-gray-700">Win rate estimation</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-[#2563EB] mr-3 font-bold">•</span>
+              <span class="text-gray-700">Natural-language recommendations</span>
+            </li>
+          </ul>
+          
+          <!-- Button Container -->
+          <div class="button-container">
+            <button id="generateInsightsBtn" class="bg-[#2563EB] hover:bg-[#1d4ed8] text-white font-semibold py-3.5 px-7 rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl button-disabled w-full" disabled>
+              Generate Insights
+            </button>
+          </div>
+
+          <!-- Results Box Placeholder -->
+          <div id="resultsBox" class="border border-gray-200 bg-[#F9FAFB] rounded-lg p-4 min-h-[120px] flex items-center justify-center">
+            <p class="text-gray-500 text-sm text-center">
+              Results will appear here after you upload Excel.
+            </p>
+          </div>
+          </div>
+
+      </div>
+          </div>
+      </section>
+
+  <!-- Upload Results Section -->
+  <section id="uploadResultsSection" class="py-12 px-4 bg-white hidden">
+    <div class="max-w-[1200px] mx-auto">
+      <h2 class="text-2xl font-bold mb-6">Upload Results</h2>
+      
+      <!-- Summary -->
+      <div id="uploadSummary" class="mb-6 p-4 bg-[#F9FAFB] rounded-lg border border-gray-200">
+        <!-- Summary content will be inserted here -->
+      </div>
+      
+      <!-- Download Files by Carrier -->
+      <div id="downloadFilesSection">
+        <!-- Download buttons will be inserted here -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-8 px-4 border-t border-gray-200">
+    <div class="max-w-[1200px] mx-auto text-center text-sm text-gray-600">
+      <p>
+        © 2025 Sales Enabler • 
+        <a href="#" class="hover:text-[#2563EB] transition-colors">Contact</a> • 
+        <a href="#" class="hover:text-[#2563EB] transition-colors">Privacy Policy</a>
+      </p>
+  </div>
+  </footer>
+
+  <script>
+    // Track state
+    let currentRunId = null;
+    let parsedExcelFiles = [];
+    let invoiceUploaded = false;
+
+    // Inline video playback
+    function playInlineVideo(videoType) {
+      const container = videoType === 'invoice' 
+        ? document.getElementById('invoiceContainer')
+        : document.getElementById('insightContainer');
+      const video = videoType === 'invoice'
+        ? document.getElementById('invoiceVideo')
+        : document.getElementById('insightVideo');
+
+      // Only play if not already playing
+      if (!container.classList.contains('playing')) {
+        container.classList.add('playing');
+        video.play();
+        
+        // When video ends, don't replay automatically
+        video.addEventListener('ended', function() {
+          // Keep video visible but paused
+          video.pause();
+        }, { once: true });
+      }
+    }
+
+    // File upload functionality
+    const uploadBtn = document.getElementById('uploadBtn');
+    const fileInput = document.getElementById('fileInput');
+    const generateInsightsBtn = document.getElementById('generateInsightsBtn');
+    const resultsBox = document.getElementById('resultsBox');
+    const uploadResultsBox = document.getElementById('uploadResultsBox');
+    const uploadResultsSection = document.getElementById('uploadResultsSection');
+    const uploadSummary = document.getElementById('uploadSummary');
+    const downloadFilesSection = document.getElementById('downloadFilesSection');
+
+    uploadBtn.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    // Helper function to get relative path from full path
+    function getRelativePath(fullPath) {
+      if (!fullPath) return '';
+      const parts = fullPath.split(/[/\\]/);
+      const outputIdx = parts.indexOf('output');
+      if (outputIdx >= 0) {
+        return parts.slice(outputIdx + 1).join('/');
+      }
+      return fullPath;
+    }
+
+    // Function to count rows in Excel file (async)
+    async function countRowsInExcel(excelPath) {
+      try {
+        const relativePath = getRelativePath(excelPath);
+        const response = await fetch(`/api/download/${relativePath}`);
+        if (!response.ok) return 0;
+        
+        // Note: We can't easily parse Excel in browser without a library
+        // For now, we'll estimate or show file info
+        // The actual row count will be available after insights are generated
+        return null; // Will be updated after insights
+      } catch (error) {
+        return null;
+      }
+    }
+
+    // Function to display upload results
+    function displayUploadResults(convertData, uploadData) {
+      if (!uploadResultsBox) return;
+      
+      // Group files by carrier
+      const filesByCarrier = {};
+      
+      convertData.results.forEach(result => {
+        const carrier = result.carrier || 'Unknown';
+        if (!filesByCarrier[carrier]) {
+          filesByCarrier[carrier] = [];
+        }
+        filesByCarrier[carrier].push(result);
+      });
+
+      const totalFiles = convertData.results.length;
+      const carrierCounts = {};
+      Object.keys(filesByCarrier).forEach(carrier => {
+        carrierCounts[carrier] = filesByCarrier[carrier].length;
+      });
+
+      // Display results in the upload results box (similar UI to insights box)
+      let resultsHtml = '<div class="space-y-4">';
+      
+      // Summary section
+      resultsHtml += '<div class="pb-4 border-b border-gray-200">';
+      resultsHtml += `<p class="font-semibold text-gray-900 mb-2">Summary</p>`;
+      resultsHtml += `<p class="text-sm text-gray-700 mb-2">Total files processed: <span class="font-semibold">${totalFiles}</span></p>`;
+      resultsHtml += '<div class="flex flex-wrap gap-2 mt-2">';
+      Object.keys(carrierCounts).forEach(carrier => {
+        resultsHtml += `<span class="px-2.5 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">${carrierCounts[carrier]} ${carrier}</span>`;
+      });
+      resultsHtml += '</div>';
+      resultsHtml += '<p class="text-xs text-gray-500 mt-2">Row counts available after generating insights.</p>';
+      resultsHtml += '</div>';
+
+      // Download buttons grouped by carrier
+      Object.keys(filesByCarrier).forEach((carrier, carrierIdx) => {
+        const files = filesByCarrier[carrier];
+        resultsHtml += `<div class="${carrierIdx < Object.keys(filesByCarrier).length - 1 ? 'pb-4 border-b border-gray-200' : ''}">`;
+        resultsHtml += `<p class="font-semibold text-sm text-gray-900 mb-2">${carrier} Files (${files.length})</p>`;
+        resultsHtml += '<div class="flex flex-wrap gap-2">';
+        
+        files.forEach((file, idx) => {
+          const excelPath = file.normalized_excel || file.parsed_excel;
+          if (excelPath) {
+            const relativePath = getRelativePath(excelPath);
+            const fileName = file.filename.replace('.pdf', '_normalized.xlsx');
+            resultsHtml += `
+              <a href="/api/download/${relativePath}" 
+                 class="bg-[#2563EB] hover:bg-[#1d4ed8] text-white text-xs font-semibold py-2 px-4 rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md inline-block"
+                 download="${fileName}">
+                Download ${carrier} ${idx + 1}
+              </a>
+            `;
+          }
+        });
+        
+        resultsHtml += '</div></div>';
+      });
+      
+      resultsHtml += '</div>';
+      
+      // Update the results box
+      uploadResultsBox.innerHTML = resultsHtml;
+      uploadResultsBox.classList.remove('flex', 'items-center', 'justify-center');
+      uploadResultsBox.classList.add('block');
+    }
+
+    fileInput.addEventListener('change', async (e) => {
+      const files = e.target.files;
+      if (files.length === 0) return;
+
+      try {
+        uploadBtn.textContent = 'Uploading...';
+        uploadBtn.disabled = true;
+
+        const formData = new FormData();
+        for (let i = 0; i < files.length; i++) {
+          formData.append('files', files[i]);
+        }
+
+        // Step 1: Upload files
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!uploadResponse.ok) {
+          const error = await uploadResponse.json();
+          throw new Error(error.error || 'Upload failed');
+        }
+
+        const uploadData = await uploadResponse.json();
+        currentRunId = uploadData.run_id;
+        invoiceUploaded = true;
+
+        // Step 2: Automatically convert PDFs to Excel (Component 1)
+        uploadBtn.textContent = 'Converting to Excel...';
+        
+        const convertResponse = await fetch('/api/convert', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ run_id: currentRunId })
+        });
+
+        if (!convertResponse.ok) {
+          const error = await convertResponse.json();
+          throw new Error(error.error || 'Conversion failed');
+        }
+
+        const convertData = await convertResponse.json();
+        parsedExcelFiles = convertData.results || [];
+        
+        // Enable Generate Insights button
+        generateInsightsBtn.classList.remove('button-disabled');
+        generateInsightsBtn.disabled = false;
+
+        uploadBtn.textContent = 'Upload Invoice';
+        uploadBtn.disabled = false;
+        
+        // Display results at the bottom
+        displayUploadResults(convertData, uploadData);
+      } catch (error) {
+        alert(`Error: ${error.message}`);
+        uploadBtn.textContent = 'Upload Invoice';
+        uploadBtn.disabled = false;
+      }
+    });
+
+        // Simple markdown renderer for the sales brief
+        function renderSalesBriefMarkdown(md) {
+      // Escape HTML first
+      const escapeHtml = (str) =>
+        str
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+
+      const lines = md.split('\n');
+      let html = '';
+      let inList = false;
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+
+        // Blank line → close list if open, otherwise skip
+        if (!line) {
+          if (inList) {
+            html += '</ul>';
+            inList = false;
+          }
+          continue;
+        }
+
+        // ### Heading
+        if (line.startsWith('### ')) {
+          if (inList) {
+            html += '</ul>';
+            inList = false;
+          }
+          const text = escapeHtml(line.slice(4));
+          html += `<h3 class="text-sm font-semibold text-gray-900 mt-4 mb-2">${text}</h3>`;
+          continue;
+        }
+
+        // ## Heading (just in case)
+        if (line.startsWith('## ')) {
+          if (inList) {
+            html += '</ul>';
+            inList = false;
+          }
+          const text = escapeHtml(line.slice(3));
+          html += `<h3 class="text-sm font-semibold text-gray-900 mt-4 mb-2">${text}</h3>`;
+          continue;
+        }
+
+        // Bullet list: "- something"
+        if (line.startsWith('- ')) {
+          if (!inList) {
+            html += '<ul class="list-disc pl-5 space-y-1 text-sm text-gray-700">';
+            inList = true;
+          }
+          const text = escapeHtml(line.slice(2));
+          html += `<li>${text}</li>`;
+          continue;
+        }
+
+        // Normal paragraph
+        if (inList) {
+          html += '</ul>';
+          inList = false;
+        }
+        html += `<p class="text-sm text-gray-700 mb-1">${escapeHtml(line)}</p>`;
+      }
+
+      if (inList) {
+        html += '</ul>';
+      }
+
+      return html;
+    }
+
+
+
+    // Generate Insights button
+    generateInsightsBtn.addEventListener('click', async () => {
+      if (!currentRunId) {
+        alert('Please upload invoices first.');
+        return;
+      }
+
+      try {
+        generateInsightsBtn.textContent = 'Generating Insights...';
+        generateInsightsBtn.disabled = true;
+
+        // Use the process endpoint which runs the full pipeline: integrate → insights → brief
+        const processResponse = await fetch('/api/process', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ run_id: currentRunId })
+        });
+
+        if (!processResponse.ok) {
+          const error = await processResponse.json();
+          throw new Error(error.error || 'Processing failed');
+        }
+
+        const processData = await processResponse.json();
+        
+        // Update upload results box with row counts
+        if (uploadResultsBox && processData.results && processData.results.length > 0) {
+          let totalRows = 0;
+          const rowsByCarrier = {};
+          const filesByCarrier = {};
+          
+          processData.results.forEach(result => {
+            const insights = result.insights || {};
+            const rows = insights.num_rows_processed || 0;
+            totalRows += rows;
+            const carrier = result.carrier || 'Unknown';
+            if (!rowsByCarrier[carrier]) {
+              rowsByCarrier[carrier] = 0;
+              filesByCarrier[carrier] = [];
+            }
+            rowsByCarrier[carrier] += rows;
+            filesByCarrier[carrier].push(result);
+          });
+
+          let resultsHtml = '<div class="space-y-4">';
+          
+          // Summary section with row counts
+          resultsHtml += '<div class="pb-4 border-b border-gray-200">';
+          resultsHtml += `<p class="font-semibold text-gray-900 mb-2">Summary</p>`;
+          resultsHtml += `<p class="text-sm text-gray-700 mb-1">Total files processed: <span class="font-semibold">${processData.results.length}</span></p>`;
+          resultsHtml += `<p class="text-sm text-gray-700 mb-2">Total rows processed: <span class="font-semibold">${totalRows.toLocaleString()}</span></p>`;
+          resultsHtml += '<div class="flex flex-wrap gap-2 mt-2">';
+          Object.keys(rowsByCarrier).forEach(carrier => {
+            const fileCount = filesByCarrier[carrier].length;
+            resultsHtml += `<span class="px-2.5 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">${fileCount} ${carrier} (${rowsByCarrier[carrier].toLocaleString()} rows)</span>`;
+          });
+          resultsHtml += '</div>';
+          resultsHtml += '</div>';
+
+          // Download buttons grouped by carrier (use parsedExcelFiles for download links)
+          Object.keys(filesByCarrier).forEach((carrier, carrierIdx) => {
+            const files = filesByCarrier[carrier];
+            const parsedFilesForCarrier = parsedExcelFiles.filter(p => (p.carrier || 'Unknown') === carrier);
+            
+            resultsHtml += `<div class="${carrierIdx < Object.keys(filesByCarrier).length - 1 ? 'pb-4 border-b border-gray-200' : ''}">`;
+            resultsHtml += `<p class="font-semibold text-sm text-gray-900 mb-2">${carrier} Files (${files.length})</p>`;
+            resultsHtml += '<div class="flex flex-wrap gap-2">';
+            
+            parsedFilesForCarrier.forEach((parsedFile, idx) => {
+              const excelPath = parsedFile.normalized_excel || parsedFile.parsed_excel;
+              if (excelPath) {
+                const relativePath = getRelativePath(excelPath);
+                const fileName = parsedFile.filename.replace('.pdf', '_normalized.xlsx');
+                resultsHtml += `
+                  <a href="/api/download/${relativePath}" 
+                     class="bg-[#2563EB] hover:bg-[#1d4ed8] text-white text-xs font-semibold py-2 px-4 rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md inline-block"
+                     download="${fileName}">
+                    Download ${carrier} ${idx + 1}
+                  </a>
+                `;
+              }
+            });
+            
+            resultsHtml += '</div></div>';
+          });
+          
+          resultsHtml += '</div>';
+          uploadResultsBox.innerHTML = resultsHtml;
+        }
+        
+        // Display sales brief in the results box
+        if (resultsBox && processData.results && processData.results.length > 0) {
+          // Fetch and display sales briefs for all results
+          let resultsHtml = '<div class="space-y-4">';
+          
+          // Process each result and fetch its brief
+          const briefPromises = processData.results.map(async (result, idx) => {
+            if (!result.brief_md) {
+              return `<div class="border-b border-gray-200 pb-4 ${idx < processData.results.length - 1 ? 'mb-4' : ''}">
+                <p class="text-gray-500 text-sm">No sales brief available for this file.</p>
+              </div>`;
+            }
+            
+            try {
+              const relativePath = getRelativePath(result.brief_md);
+              const briefResponse = await fetch(`/api/download/${relativePath}`);
+              if (!briefResponse.ok) throw new Error('Failed to fetch brief');
+              
+              const briefText = await briefResponse.text();
+              
+              const formattedBrief = renderSalesBriefMarkdown(briefText);
+
+              return `
+                <div class="rounded-xl border border-gray-200 bg-white shadow-sm p-4 ${idx < processData.results.length - 1 ? 'mb-4' : ''}">
+                  <div class="flex items-center justify-between mb-3">
+                    <h4 class="font-semibold text-gray-900 text-sm">
+                      ${result.filename} (${result.carrier || 'Unknown'})
+                    </h4>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                      LLM: OpenAI
+                    </span>
+                  </div>
+                  <div class="text-sm text-gray-800 leading-relaxed space-y-1">
+                    ${formattedBrief}
+                  </div>
+                </div>
+              `;
+
+
+              
+
+
+            } catch (error) {
+              return `<div class="border-b border-gray-200 pb-4 ${idx < processData.results.length - 1 ? 'mb-4' : ''}">
+                <p class="text-gray-500 text-sm">Error loading sales brief: ${error.message}</p>
+              </div>`;
+            }
+          });
+          
+          // Wait for all briefs to load
+          const briefHtmls = await Promise.all(briefPromises);
+          resultsHtml += briefHtmls.join('');
+          resultsHtml += '</div>';
+          
+          resultsBox.innerHTML = resultsHtml;
+          
+          // Update the results box container styling
+          resultsBox.classList.remove('flex', 'items-center', 'justify-center');
+          resultsBox.classList.add('block');
+        } else if (resultsBox) {
+          resultsBox.innerHTML = '<p class="text-gray-500 text-sm text-center">No results generated.</p>';
+        }
+
+        generateInsightsBtn.textContent = 'Generate Insights';
+        generateInsightsBtn.disabled = false;
+        
+        alert(`Successfully generated insights for ${processData.results.length} file(s)!`);
+      } catch (error) {
+        alert(`Error: ${error.message}`);
+        generateInsightsBtn.textContent = 'Generate Insights';
+        generateInsightsBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+*.DS_Store
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Data and output directories (keep structure, ignore contents)
+data/
+output/parsed/*
+output/integrated/*
+output/insights/*
+input/web_runs/*
+!output/parsed/.gitkeep
+!output/integrated/.gitkeep
+!output/insights/.gitkeep
+!input/web_runs/.gitkeep
+
+# Test files (optional - uncomment if you don't want to commit)
+# Test.py
+# streamlit_app.py
+
+# Logs
+*.log
